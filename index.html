@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Clevergramm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            overscroll-behavior: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        input, textarea {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+        .chat-container {
+            height: 100vh;
+            height: 100dvh;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-custom {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="m-0 p-0 overflow-hidden">
+    <div id="app"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const IconSend = () => (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+        );
+
+        const IconArrowLeft = () => (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+        );
+
+        const IconSearch = () => (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        );
+
+        const IconUser = () => (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+        );
+
+        const IconPhone = () => (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+        );
+
+        const IconVideo = () => (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+        );
+
+        const IconMic = () => (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+        );
+
+        const IconPaperclip = () => (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+            </svg>
+        );
+
+        const IconX = () => (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        );
+
+        const IconCheck = () => (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+        );
+
+        const IconLogOut = () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+        );
+
+        const IconFile = () => (
+            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+        );
+
+        const IconCamera = () => (
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        );
+
+        function Clevergramm() {
+            const [currentView, setCurrentView] = useState('login');
+            const [selectedChat, setSelectedChat] = useState(null);
+            const [messageText, setMessageText] = useState('');
+            const [callType, setCallType] = useState(null);
+            const [callDuration, setCallDuration] = useState(0);
+            const [isRecording, setIsRecording] = useState(false);
+            const messagesEndRef = useRef(null);
+
+            const [phoneNumber, setPhoneNumber] = useState('');
+            const [nickname, setNickname] = useState('');
+            const [bio, setBio] = useState('');
+            const [currentUser, setCurrentUser] = useState(null);
+            const [registeredUsers, setRegisteredUsers] = useState([]);
+            const [errorMessage, setErrorMessage] = useState('');
+            const [searchQuery, setSearchQuery] = useState('');
+            const [searchResults, setSearchResults] = useState([]);
+            const [chats, setChats] = useState([]);
+            const [messages, setMessages] = useState({});
+
+            const [messages, setMessages] = useState({});
+
+            // Загрузка данных из localStorage при запуске
+            useEffect(() => {
+                // Загрузка зарегистрированных пользователей
+                const savedUsers = localStorage.getItem('clevergramm_users');
+                if (savedUsers) {
+                    setRegisteredUsers(JSON.parse(savedUsers));
+                }
+
+                // Загрузка текущего пользователя
+                const savedCurrentUser = localStorage.getItem('clevergramm_current_user');
+                if (savedCurrentUser) {
+                    const user = JSON.parse(savedCurrentUser);
+                    setCurrentUser(user);
+                    setCurrentView('chats');
+                }
+
+                // Загрузка чатов
+                const savedChats = localStorage.getItem('clevergramm_chats_' + (savedCurrentUser ? JSON.parse(savedCurrentUser).id : ''));
+                if (savedChats) {
+                    setChats(JSON.parse(savedChats));
+                }
+
+                // Загрузка сообщений
+                const savedMessages = localStorage.getItem('clevergramm_messages_' + (savedCurrentUser ? JSON.parse(savedCurrentUser).id : ''));
+                if (savedMessages) {
+                    setMessages(JSON.parse(savedMessages));
+                }
+            }, []);
+
+            // Сохранение пользователей при изменении
+            useEffect(() => {
+                if (registeredUsers.length > 0) {
+                    localStorage.setItem('clevergramm_users', JSON.stringify(registeredUsers));
+                }
+            }, [registeredUsers]);
+
+            // Сохранение текущего пользователя
+            useEffect(() => {
+                if (currentUser) {
+                    localStorage.setItem('clevergramm_current_user', JSON.stringify(currentUser));
+                }
+            }, [currentUser]);
+
+            // Сохранение чатов
+            useEffect(() => {
+                if (currentUser && chats.length > 0) {
+                    localStorage.setItem('clevergramm_chats_' + currentUser.id, JSON.stringify(chats));
+                }
+            }, [chats, currentUser]);
+
+            // Сохранение сообщений
+            useEffect(() => {
+                if (currentUser && Object.keys(messages).length > 0) {
+                    localStorage.setItem('clevergramm_messages_' + currentUser.id, JSON.stringify(messages));
+                }
+            }, [messages, currentUser]);
+
+            useEffect(() => {
+                if (currentUser) {
+                    const channelExists = chats.some(chat => chat.id === 'channel');
+                    if (!channelExists && currentUser.isOwner) {
+                        setChats([{
+                            id: 'channel',
+                            userId: currentUser.id,
+                            name: 'Канал Clevergramm',
+                            nickname: currentUser.nickname,
+                            avatar: '📢',
+                            lastMessage: 'Официальный канал',
+                            time: 'Сейчас',
+                            unread: 0,
+                            online: true,
+                            bio: 'Официальный канал ' + currentUser.nickname,
+                            isChannel: true
+                        }, ...chats]);
+                    }
+                }
+            }, [currentUser]);
+
+            useEffect(() => {
+                if (callType && currentView === 'call') {
+                    const interval = setInterval(() => {
+                        setCallDuration(prev => prev + 1);
+                    }, 1000);
+                    return () => clearInterval(interval);
+                }
+            }, [callType, currentView]);
+
+            useEffect(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, [messages, selectedChat]);
+
+            const formatCallDuration = (seconds) => {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            };
+
+            const formatPhoneNumber = (value) => {
+                const numbers = value.replace(/\D/g, '');
+                if (numbers.length === 0) return '';
+                if (numbers.length <= 1) return `+${numbers}`;
+                if (numbers.length <= 4) return `+${numbers.slice(0, 1)} (${numbers.slice(1)}`;
+                if (numbers.length <= 7) return `+${numbers.slice(0, 1)} (${numbers.slice(1, 4)}) ${numbers.slice(4)}`;
+                if (numbers.length <= 9) return `+${numbers.slice(0, 1)} (${numbers.slice(1, 4)}) ${numbers.slice(4, 7)}-${numbers.slice(7)}`;
+                return `+${numbers.slice(0, 1)} (${numbers.slice(1, 4)}) ${numbers.slice(4, 7)}-${numbers.slice(7, 9)}-${numbers.slice(9, 11)}`;
+            };
+
+            const checkNicknameAvailable = (nick) => {
+                return !registeredUsers.some(user => user.nickname.toLowerCase() === nick.toLowerCase());
+            };
+
+            const handleLogin = () => {
+                setErrorMessage('');
+                if (!phoneNumber) {
+                    setErrorMessage('Введите номер телефона');
+                    return;
+                }
+                
+                const user = registeredUsers.find(u => u.phone === phoneNumber.replace(/\D/g, '').replace(/^/, '+'));
+                if (user) {
+                    setCurrentUser(user);
+                    setCurrentView('chats');
+                } else {
+                    setErrorMessage('Номер не зарегистрирован. Создайте аккаунт.');
+                }
+            };
+
+            const handleRegister = () => {
+                setErrorMessage('');
+                
+                if (!phoneNumber || !nickname) {
+                    setErrorMessage('Заполните все поля');
+                    return;
+                }
+
+                if (nickname.length < 3) {
+                    setErrorMessage('Никнейм должен содержать минимум 3 символа');
+                    return;
+                }
+
+                if (!/^[a-zA-Z0-9_]+$/.test(nickname)) {
+                    setErrorMessage('Никнейм может содержать только буквы, цифры и _');
+                    return;
+                }
+
+                if (!checkNicknameAvailable(nickname)) {
+                    setErrorMessage(`Никнейм "${nickname}" уже занят. Выберите другой.`);
+                    return;
+                }
+
+                const cleanPhone = '+' + phoneNumber.replace(/\D/g, '');
+                if (registeredUsers.some(u => u.phone === cleanPhone)) {
+                    setErrorMessage('Этот номер уже зарегистрирован');
+                    return;
+                }
+
+                const newUser = {
+                    id: Date.now(),
+                    phone: cleanPhone,
+                    nickname: nickname,
+                    bio: bio || 'Привет! Я использую Clevergramm',
+                    avatar: '👤',
+                    isOwner: registeredUsers.length === 0 // Первый пользователь = owner
+                };
+
+                setRegisteredUsers([...registeredUsers, newUser]);
+                setCurrentUser(newUser);
+                setCurrentView('chats');
+            };
+
+            const handleLogout = () => {
+                localStorage.removeItem('clevergramm_current_user');
+                if (currentUser) {
+                    localStorage.removeItem('clevergramm_chats_' + currentUser.id);
+                    localStorage.removeItem('clevergramm_messages_' + currentUser.id);
+                }
+                setCurrentUser(null);
+                setCurrentView('login');
+                setPhoneNumber('');
+                setNickname('');
+                setBio('');
+                setChats([]);
+                setMessages({});
+            };
+
+            const handleSearch = () => {
+                if (!searchQuery.trim()) {
+                    setSearchResults([]);
+                    return;
+                }
+
+                const query = searchQuery.toLowerCase().replace('@', '');
+                const results = registeredUsers.filter(user => 
+                    user.nickname.toLowerCase().includes(query) && user.id !== currentUser?.id
+                );
+                setSearchResults(results);
+            };
+
+            const startChatWithUser = (user) => {
+                const existingChat = chats.find(chat => chat.userId === user.id);
+                
+                if (existingChat) {
+                    setSelectedChat(existingChat);
+                    setCurrentView('chat');
+                    setSearchQuery('');
+                    setSearchResults([]);
+                    return;
+                }
+
+                const newChat = {
+                    id: Date.now(),
+                    userId: user.id,
+                    name: user.nickname,
+                    nickname: user.nickname,
+                    avatar: user.avatar,
+                    lastMessage: 'Начните общение',
+                    time: 'Сейчас',
+                    unread: 0,
+                    online: true,
+                    bio: user.bio
+                };
+
+                setChats([newChat, ...chats]);
+                setSelectedChat(newChat);
+                setCurrentView('chat');
+                setSearchQuery('');
+                setSearchResults([]);
+            };
+
+            const sendMessage = () => {
+                if (!messageText.trim() || !selectedChat) return;
+
+                if (selectedChat.isChannel && selectedChat.userId !== currentUser?.id) {
+                    alert('Только владелец канала может публиковать сообщения');
+                    return;
+                }
+
+                const newMessage = {
+                    id: Date.now(),
+                    text: messageText,
+                    time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+                    isMine: true,
+                    isOwner: currentUser?.isOwner
+                };
+
+                setMessages(prev => ({
+                    ...prev,
+                    [selectedChat.id]: [...(prev[selectedChat.id] || []), newMessage]
+                }));
+                setMessageText('');
+            };
+
+            const startCall = (type) => {
+                setCallType(type);
+                setCurrentView('call');
+                setCallDuration(0);
+            };
+
+            const endCall = () => {
+                setCallType(null);
+                setCurrentView('chat');
+                setCallDuration(0);
+            };
+
+            const sendFile = (type) => {
+                if (!selectedChat) return;
+
+                let newMessage;
+                if (type === 'image') {
+                    newMessage = {
+                        id: Date.now(),
+                        type: 'image',
+                        url: '📷',
+                        time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+                        isMine: true
+                    };
+                } else if (type === 'file') {
+                    newMessage = {
+                        id: Date.now(),
+                        type: 'file',
+                        fileName: 'Документ.pdf',
+                        size: '1.2 MB',
+                        time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+                        isMine: true
+                    };
+                } else if (type === 'audio') {
+                    newMessage = {
+                        id: Date.now(),
+                        type: 'audio',
+                        duration: '0:45',
+                        time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+                        isMine: true
+                    };
+                }
+
+                setMessages(prev => ({
+                    ...prev,
+                    [selectedChat.id]: [...(prev[selectedChat.id] || []), newMessage]
+                }));
+            };
+
+            // Login Screen
+            if (currentView === 'login') {
+                return (
+                    <div className="flex flex-col h-screen bg-gradient-to-b from-blue-500 to-blue-700">
+                        <div className="flex-1 flex flex-col items-center justify-center p-6">
+                            <div className="text-7xl mb-6 animate-bounce">💬</div>
+                            <h1 className="text-5xl font-bold text-white mb-3 tracking-tight">Clevergramm</h1>
+                            <p className="text-blue-50 text-lg mb-16 font-light">Умный мессенджер</p>
+                            
+                            <div className="w-full max-w-sm bg-white rounded-3xl p-8 shadow-2xl">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-8 text-center">Вход</h2>
+                                
+                                <input
+                                    type="tel"
+                                    value={phoneNumber}
+                                    onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
+                                    placeholder="Номер телефона"
+                                    className="w-full px-5 py-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-500 mb-5 text-lg transition-all"
+                                />
+                                
+                                {errorMessage && (
+                                    <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg mb-5 text-sm">
+                                        {errorMessage}
+                                    </div>
+                                )}
+                                
+                                <button
+                                    onClick={handleLogin}
+                                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition-all mb-3 active:scale-95"
+                                >
+                                    Войти
+                                </button>
+                                
+                                <button
+                                    onClick={() => {
+                                        setCurrentView('register');
+                                        setErrorMessage('');
+                                        setPhoneNumber('');
+                                    }}
+                                    className="w-full bg-gray-50 text-gray-700 py-4 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-all active:scale-95"
+                                >
+                                    Создать аккаунт
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Register Screen
+            if (currentView === 'register') {
+                return (
+                    <div className="flex flex-col h-screen bg-gradient-to-b from-blue-500 to-blue-700 overflow-y-auto">
+                        <div className="flex-1 flex flex-col items-center justify-center p-6 py-12">
+                            <div className="text-7xl mb-6">✨</div>
+                            <h1 className="text-4xl font-bold text-white mb-2">Регистрация</h1>
+                            <p className="text-blue-50 mb-10">Создайте свой аккаунт</p>
+                            
+                            <div className="w-full max-w-sm bg-white rounded-3xl p-8 shadow-2xl">
+                                {registeredUsers.length === 0 && (
+                                    <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 px-4 py-3 rounded-lg mb-5 text-sm">
+                                        👑 Вы будете первым пользователем (владельцем) с правами администратора и своим каналом!
+                                    </div>
+                                )}
+                                
+                                <input
+                                    type="tel"
+                                    value={phoneNumber}
+                                    onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
+                                    placeholder="Номер телефона"
+                                    className="w-full px-5 py-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-500 mb-4 text-lg transition-all"
+                                />
+                                
+                                <div className="relative mb-4">
+                                    <input
+                                        type="text"
+                                        value={nickname}
+                                        onChange={(e) => setNickname(e.target.value.toLowerCase())}
+                                        placeholder="Никнейм (например: clever)"
+                                        className="w-full px-5 py-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-500 text-lg transition-all"
+                                    />
+                                    {nickname && checkNicknameAvailable(nickname) && nickname.length >= 3 && (
+                                        <div className="absolute right-4 top-4 text-green-500">
+                                            <IconCheck />
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                <input
+                                    type="text"
+                                    value={bio}
+                                    onChange={(e) => setBio(e.target.value)}
+                                    placeholder="О себе (необязательно)"
+                                    className="w-full px-5 py-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-500 mb-5 text-lg transition-all"
+                                />
+                                
+                                {errorMessage && (
+                                    <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+                                        {errorMessage}
+                                    </div>
+                                )}
+                                
+                                {nickname && !checkNicknameAvailable(nickname) && (
+                                    <div className="bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700 px-4 py-3 rounded-lg mb-4 text-sm">
+                                        ⚠️ Никнейм "{nickname}" уже занят
+                                    </div>
+                                )}
+                                
+                                <button
+                                    onClick={handleRegister}
+                                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition-all mb-3 active:scale-95"
+                                >
+                                    Зарегистрироваться
+                                </button>
+                                
+                                <button
+                                    onClick={() => {
+                                        setCurrentView('login');
+                                        setErrorMessage('');
+                                        setPhoneNumber('');
+                                        setNickname('');
+                                        setBio('');
+                                    }}
+                                    className="w-full bg-gray-50 text-gray-700 py-4 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-all active:scale-95"
+                                >
+                                    Уже есть аккаунт
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Profile View
+            if (currentView === 'profile' && selectedChat) {
+                return (
+                    <div className="flex flex-col h-screen bg-gray-50">
+                        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-4 flex items-center gap-4 shadow-lg">
+                            <button onClick={() => setCurrentView('chat')} className="active:scale-90 transition-transform">
+                                <IconArrowLeft />
+                            </button>
+                            <h1 className="text-xl font-semibold">Профиль</h1>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto">
+                            <div className="bg-gradient-to-b from-white to-gray-50 p-10 text-center">
+                                <div className="w-36 h-36 mx-auto rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-7xl mb-5 shadow-xl">
+                                    {selectedChat.avatar}
+                                </div>
+                                <h2 className="text-3xl font-bold text-gray-900 mb-2">{selectedChat.name}</h2>
+                                <p className="text-blue-600 text-lg font-medium mb-3">@{selectedChat.nickname}</p>
+                                <p className="text-gray-600 text-base max-w-xs mx-auto">{selectedChat.bio}</p>
+                                <div className="mt-5">
+                                    {selectedChat.online ? (
+                                        <span className="inline-flex items-center gap-2 text-green-600 font-medium">
+                                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                            В сети
+                                        </span>
+                                    ) : (
+                                        <span className="text-gray-500">Был(а) недавно</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-5 mt-3">
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => startCall('audio')}
+                                        className="flex-1 flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-2xl font-semibold text-lg hover:shadow-lg transition-all active:scale-95"
+                                    >
+                                        <IconPhone />
+                                        <span>Позвонить</span>
+                                    </button>
+                                    <button
+                                        onClick={() => startCall('video')}
+                                        className="flex-1 flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-2xl font-semibold text-lg hover:shadow-lg transition-all active:scale-95"
+                                    >
+                                        <IconCamera />
+                                        <span>Видео</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-5 mt-3">
+                                <h3 className="font-bold text-gray-900 mb-4 text-lg">Информация</h3>
+                                <div className="space-y-4">
+                                    <div className="pb-3 border-b border-gray-100">
+                                        <p className="text-sm text-gray-500 mb-1">Никнейм</p>
+                                        <p className="text-gray-900 font-medium">@{selectedChat.nickname}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500 mb-1">О себе</p>
+                                        <p className="text-gray-900">{selectedChat.bio || 'Не указано'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // My Profile
+            if (currentView === 'myProfile' && currentUser) {
+                return (
+                    <div className="flex flex-col h-screen bg-gray-50">
+                        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-4 flex items-center justify-between shadow-lg">
+                            <div className="flex items-center gap-4">
+                                <button onClick={() => setCurrentView('chats')} className="active:scale-90 transition-transform">
+                                    <IconArrowLeft />
+                                </button>
+                                <h1 className="text-xl font-semibold">Мой профиль</h1>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto">
+                            <div className="bg-gradient-to-b from-white to-gray-50 p-10 text-center">
+                                <div className="w-36 h-36 mx-auto rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-7xl mb-5 shadow-xl">
+                                    {currentUser.avatar}
+                                </div>
+                                <h2 className="text-3xl font-bold text-gray-900 mb-2">Вы</h2>
+                                <p className="text-blue-600 text-lg font-medium mb-3">@{currentUser.nickname}</p>
+                                <p className="text-gray-600 text-base max-w-xs mx-auto">{currentUser.bio}</p>
+                            </div>
+
+                            <div className="bg-white p-5 mt-3">
+                                <h3 className="font-bold text-gray-900 mb-4 text-lg">Информация</h3>
+                                <div className="space-y-4">
+                                    <div className="pb-3 border-b border-gray-100">
+                                        <p className="text-sm text-gray-500 mb-1">Телефон</p>
+                                        <p className="text-gray-900 font-medium">{currentUser.phone}</p>
+                                    </div>
+                                    <div className="pb-3 border-b border-gray-100">
+                                        <p className="text-sm text-gray-500 mb-1">Никнейм</p>
+                                        <p className="text-gray-900 font-medium">@{currentUser.nickname}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500 mb-1">О себе</p>
+                                        <p className="text-gray-900">{currentUser.bio}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-5">
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-red-500 to-red-600 text-white py-4 rounded-2xl font-semibold text-lg hover:shadow-lg transition-all active:scale-95"
+                                >
+                                    <IconLogOut />
+                                    <span>Выйти</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Chats List
+            if (currentView === 'chats') {
+                return (
+                    <div className="flex flex-col h-screen bg-gray-50">
+                        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-4 flex items-center justify-between shadow-lg">
+                            <h1 className="text-2xl font-bold tracking-tight">Clevergramm</h1>
+                            <div className="flex gap-4">
+                                <button onClick={() => setCurrentView('search')} className="active:scale-90 transition-transform">
+                                    <IconSearch />
+                                </button>
+                                <button onClick={() => setCurrentView('myProfile')} className="active:scale-90 transition-transform">
+                                    <IconUser />
+                                </button>
+                            </div>
+                        </div>
+
+                        {currentUser && (
+                            <div className="bg-blue-500 text-white px-5 py-3 text-sm font-medium shadow">
+                                Вы вошли как @{currentUser.nickname}
+                            </div>
+                        )}
+
+                        <div className="flex-1 overflow-y-auto">
+                            {chats.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-full text-gray-400 p-8 text-center">
+                                    <div className="mb-4 opacity-30">
+                                        <IconSearch />
+                                    </div>
+                                    <p className="text-xl font-semibold mb-2 text-gray-500">Нет чатов</p>
+                                    <p className="text-base">Найдите пользователей, чтобы начать общение</p>
+                                </div>
+                            ) : (
+                                chats.map(chat => (
+                                    <div
+                                        key={chat.id}
+                                        onClick={() => {
+                                            setSelectedChat(chat);
+                                            setCurrentView('chat');
+                                        }}
+                                        className="flex items-center gap-4 px-5 py-4 border-b border-gray-100 active:bg-gray-100 transition-colors"
+                                    >
+                                        <div className="relative flex-shrink-0">
+                                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-3xl shadow-md">
+                                                {chat.avatar}
+                                            </div>
+                                            {chat.online && !chat.isChannel && (
+                                                <div className="absolute bottom-0 right-0 w-5 h-5 bg-green-500 rounded-full border-4 border-white"></div>
+                                            )}
+                                            {chat.isChannel && (
+                                                <div className="absolute -bottom-1 -right-1 text-2xl">👑</div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-baseline mb-1">
+                                                <div className="font-semibold text-gray-900 truncate text-lg">
+                                                    {chat.name}
+                                                    {chat.isChannel && ' 📢'}
+                                                </div>
+                                                <div className="text-xs text-gray-500 ml-2 flex-shrink-0">{chat.time}</div>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <div className="text-sm text-gray-600 truncate">{chat.lastMessage}</div>
+                                                {chat.unread > 0 && (
+                                                    <div className="ml-2 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">
+                                                        {chat.unread}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                );
+            }
+
+            // Search View
+            if (currentView === 'search') {
+                return (
+                    <div className="flex flex-col h-screen bg-gray-50">
+                        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-4 flex items-center gap-4 shadow-lg">
+                            <button
+                                onClick={() => {
+                                    setCurrentView('chats');
+                                    setSearchQuery('');
+                                    setSearchResults([]);
+                                }}
+                                className="active:scale-90 transition-transform"
+                            >
+                                <IconArrowLeft />
+                            </button>
+                            <h1 className="text-xl font-semibold">Поиск пользователей</h1>
+                        </div>
+
+                        <div className="p-5 bg-white shadow-sm">
+                            <div className="flex gap-3">
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                    placeholder="Введите никнейм..."
+                                    className="flex-1 px-5 py-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-blue-500 text-lg transition-all"
+                                />
+                                <button
+                                    onClick={handleSearch}
+                                    className="px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:shadow-lg transition-all active:scale-95"
+                                >
+                                    <IconSearch />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto">
+                            {searchResults.length > 0 ? (
+                                searchResults.map(user => (
+                                    <div
+                                        key={user.id}
+                                        onClick={() => startChatWithUser(user)}
+                                        className="flex items-center gap-4 px-5 py-4 border-b border-gray-100 active:bg-gray-100 transition-colors"
+                                    >
+                                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-3xl relative shadow-md">
+                                            {user.avatar}
+                                            {user.isOwner && (
+                                                <div className="absolute -top-1 -right-1 text-2xl">👑</div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="font-semibold text-gray-900 text-lg">@{user.nickname}</div>
+                                            <div className="text-sm text-gray-600">{user.bio}</div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : searchQuery ? (
+                                <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+                                    <p className="text-xl font-semibold">Пользователи не найдены</p>
+                                    <p className="text-base mt-2">Попробуйте другой запрос</p>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+                                    <div className="mb-4 opacity-30">
+                                        <IconSearch />
+                                    </div>
+                                    <p className="text-xl font-semibold">Введите никнейм</p>
+                                    <p className="text-base mt-2">Например: owner</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            }
+
+            // Call Screen
+            if (currentView === 'call' && callType) {
+                return (
+                    <div className="flex flex-col h-screen bg-gradient-to-b from-gray-800 to-gray-900">
+                        <div className="flex-1 flex flex-col items-center justify-center text-white p-8">
+                            <div className="text-9xl mb-10 drop-shadow-2xl">{selectedChat?.avatar}</div>
+                            <h2 className="text-4xl font-bold mb-3">{selectedChat?.name}</h2>
+                            <p className="text-2xl text-gray-300 font-mono tracking-wide">{formatCallDuration(callDuration)}</p>
+                            
+                            {callType === 'video' && (
+                                <div className="absolute top-24 right-6 w-32 h-44 bg-gray-700 rounded-2xl overflow-hidden shadow-2xl border-4 border-gray-600">
+                                    <div className="w-full h-full flex items-center justify-center text-5xl">
+                                        📹
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex justify-center gap-6 pb-16">
+                            <button className="w-20 h-20 bg-gray-700 text-white rounded-full hover:bg-gray-600 transition-all active:scale-90 flex items-center justify-center shadow-lg">
+                                <IconMic />
+                            </button>
+                            {callType === 'video' && (
+                                <button className="w-20 h-20 bg-gray-700 text-white rounded-full hover:bg-gray-600 transition-all active:scale-90 flex items-center justify-center shadow-lg">
+                                    <IconCamera />
+                                </button>
+                            )}
+                            <button
+                                onClick={endCall}
+                                className="w-20 h-20 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-full hover:shadow-xl transition-all active:scale-90 flex items-center justify-center shadow-lg"
+                            >
+                                <IconX />
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Chat Screen
+            return (
+                <div className="flex flex-col h-screen bg-gray-50">
+                    <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-4 flex items-center gap-4 shadow-lg">
+                        <button onClick={() => setCurrentView('chats')} className="active:scale-90 transition-transform">
+                            <IconArrowLeft />
+                        </button>
+                        <div
+                            className="flex items-center gap-3 flex-1 active:opacity-70 transition-opacity"
+                            onClick={() => !selectedChat?.isChannel && setCurrentView('profile')}
+                        >
+                            <div className="w-12 h-12 rounded-full bg-blue-400 flex items-center justify-center text-2xl relative shadow-md">
+                                {selectedChat?.avatar}
+                                {selectedChat?.isChannel && (
+                                    <div className="absolute -bottom-1 -right-1 text-lg">👑</div>
+                                )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="font-semibold text-lg truncate">
+                                    {selectedChat?.name}
+                                    {selectedChat?.isChannel && ' 📢'}
+                                </div>
+                                <div className="text-xs text-blue-100">
+                                    {selectedChat?.isChannel 
+                                        ? 'Официальный канал' 
+                                        : selectedChat?.online ? 'в сети' : 'был(а) недавно'}
+                                </div>
+                            </div>
+                        </div>
+                        {!selectedChat?.isChannel && (
+                            <div className="flex gap-4">
+                                <button onClick={() => startCall('audio')} className="active:scale-90 transition-transform">
+                                    <IconPhone />
+                                </button>
+                                <button onClick={() => startCall('video')} className="active:scale-90 transition-transform">
+                                    <IconVideo />
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {selectedChat?.isChannel && selectedChat.userId !== currentUser?.id && (
+                        <div className="bg-yellow-50 border-b-2 border-yellow-200 px-5 py-3 text-sm text-yellow-800 font-medium">
+                            ℹ️ Это канал. Только владелец канала может публиковать сообщения.
+                        </div>
+                    )}
+
+                    <div className="flex-1 overflow-y-auto p-5 space-y-3">
+                        {(messages[selectedChat?.id] || []).map(message => (
+                            <div
+                                key={message.id}
+                                className={`flex ${message.isMine ? 'justify-end' : 'justify-start'}`}
+                            >
+                                <div className="max-w-[80%]">
+                                    {message.isOwner && !message.isMine && (
+                                        <div className="flex items-center gap-1 text-xs text-yellow-600 font-bold mb-1 ml-4">
+                                            <span className="text-base">👑</span>
+                                            <span>owner</span>
+                                        </div>
+                                    )}
+                                    <div
+                                        className={`rounded-3xl px-5 py-3 shadow-md ${
+                                            message.isMine
+                                                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-br-md'
+                                                : message.isOwner
+                                                ? 'bg-gradient-to-r from-yellow-300 to-yellow-400 text-gray-900 rounded-bl-md shadow-lg'
+                                                : 'bg-white text-gray-900 rounded-bl-md'
+                                        }`}
+                                    >
+                                        {message.type === 'image' && (
+                                            <div className="mb-2">
+                                                <div className="w-56 h-56 bg-gray-100 rounded-2xl flex items-center justify-center text-7xl shadow-inner">
+                                                    {message.url}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {message.type === 'file' && (
+                                            <div className="flex items-center gap-3 py-2">
+                                                <IconFile />
+                                                <div>
+                                                    <div className="font-semibold">{message.fileName}</div>
+                                                    <div className="text-xs opacity-70">{message.size}</div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {message.type === 'audio' && (
+                                            <div className="flex items-center gap-3 py-2 min-w-[220px]">
+                                                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                                                    <IconMic />
+                                                </div>
+                                                <div className="flex-1 h-10 bg-white/20 rounded-full"></div>
+                                                <div className="text-sm font-mono">{message.duration}</div>
+                                            </div>
+                                        )}
+                                        {message.text && <div className="text-base leading-relaxed">{message.text}</div>}
+                                        <div
+                                            className={`text-xs mt-2 ${
+                                                message.isMine ? 'text-blue-100' : message.isOwner ? 'text-yellow-900' : 'text-gray-500'
+                                            }`}
+                                        >
+                                            {message.time}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        <div ref={messagesEndRef} />
+                    </div>
+
+                    <div className="bg-white border-t-2 border-gray-100 px-5 py-4 shadow-lg">
+                        {selectedChat?.isChannel && selectedChat.userId !== currentUser?.id ? (
+                            <div className="text-center text-gray-500 py-4 font-medium">
+                                🔒 Только владелец канала может писать сообщения
+                            </div>
+                        ) : (
+                            <>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => {
+                                            const type = prompt('Введите тип файла: image, file, audio');
+                                            if (type) sendFile(type);
+                                        }}
+                                        className="text-gray-500 active:text-blue-600 transition-colors active:scale-90"
+                                    >
+                                        <IconPaperclip />
+                                    </button>
+                                    <input
+                                        type="text"
+                                        value={messageText}
+                                        onChange={(e) => setMessageText(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                                        placeholder="Сообщение..."
+                                        className="flex-1 px-5 py-3 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base transition-all"
+                                    />
+                                    {messageText.trim() ? (
+                                        <button onClick={sendMessage} className="text-blue-600 active:scale-90 transition-transform">
+                                            <IconSend />
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => {
+                                                setIsRecording(!isRecording);
+                                                if (!isRecording) {
+                                                    setTimeout(() => {
+                                                        setIsRecording(false);
+                                                        sendFile('audio');
+                                                    }, 2000);
+                                                }
+                                            }}
+                                            className="text-gray-500 active:text-blue-600 transition-colors active:scale-90"
+                                        >
+                                            <IconMic />
+                                        </button>
+                                    )}
+                                </div>
+                                {isRecording && (
+                                    <div className="mt-3 text-center text-red-600 text-sm font-semibold animate-pulse-custom">
+                                        🔴 Запись голосового сообщения...
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('app'));
+        root.render(<Clevergramm />);
+    </script>
+</body>
+</html>
